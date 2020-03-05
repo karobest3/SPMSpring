@@ -1,15 +1,18 @@
 package com.ntk.spm.controller;
 
+import com.ntk.spm.dto.ListPhonesDTO;
 import com.ntk.spm.model.Phone;
-import com.ntk.spm.model.Phone;
-import com.ntk.spm.model.Product;
+import com.ntk.spm.security.JwtTokenUtil;
 import com.ntk.spm.service.PhoneService;
 import com.ntk.spm.service.impl.PhoneServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -17,26 +20,38 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin("*")
+@CrossOrigin(origins = "*", allowedHeaders = "*", exposedHeaders = "Authorization")
+@RequestMapping("")
 public class PhoneController {
-
+    @Autowired(required = false)
+    AuthenticationManager authenticationManager;
+    @Autowired
+    JwtTokenUtil jwtTokenUtil;
     @Autowired
     private PhoneService phoneService = new PhoneServiceImpl();
 
     //-------------------Retrieve All Phone--------------------------------------------------------
-    @RequestMapping(value = "/phones/{brand}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Product>> listAllCustomers(@PathVariable("brand") String brand) {
-        List<Product> phones = phoneService.findAllProduct(brand);
+
+    @RequestMapping(value = "/phones/{brand}", params = {"page","size","search"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Page<ListPhonesDTO>> listAllCustomers(@PathVariable("brand") String brand, @RequestParam("search") String search, @RequestParam("page") int page, @RequestParam("size") int size) {
+        Page<ListPhonesDTO> phones = phoneService.findProduct(brand,search,PageRequest.of(page,size));
         if (phones.isEmpty()) {
-            return new ResponseEntity<List<Product>>(HttpStatus.NO_CONTENT);//You many decide to return HttpStatus.NOT_FOUND
+            return new ResponseEntity<Page<ListPhonesDTO>>(HttpStatus.NO_CONTENT);//You many decide to return HttpStatus.NOT_FOUND
         }
-        return new ResponseEntity<List<Product>>(phones, HttpStatus.OK);
+        return new ResponseEntity<Page<ListPhonesDTO>>(phones, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/phones/{brand}", params = {"id"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Phone> getPhoneById(@PathVariable("brand") String brand, @RequestParam("id") Long id) {
+        Phone phones = phoneService.findById(id);
+        if (phones == null) {
+            return new ResponseEntity<Phone>(HttpStatus.NO_CONTENT);//You many decide to return HttpStatus.NOT_FOUND
+        }
+        return new ResponseEntity<Phone>(phones, HttpStatus.OK);
+    }
     //-------------------Retrieve Single Phone--------------------------------------------------------
 
 //    @RequestMapping(value = "/phones/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)

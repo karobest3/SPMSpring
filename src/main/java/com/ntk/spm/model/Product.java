@@ -24,6 +24,17 @@ public abstract class Product {
     private String url;
     @Column(name = "url_details")
     private String url_details;
+    @Column(name = "url_more")
+    private String url_more;
+
+    public String getUrl_more() {
+        return url_more;
+    }
+
+    public void setUrl_more(String url_more) {
+        this.url_more = url_more;
+    }
+
     @Column(name = "active")
     private boolean active;
 
